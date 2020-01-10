@@ -1,4 +1,6 @@
 const lib = require("../lib");
+const db = require("../db");
+const mail = require("../mail");
 
 describe("absolute", () => {
 
@@ -66,4 +68,43 @@ describe("registerUser", () => {
         expect(result).toMatchObject({ username: "mosh" });
         expect(result.id).toBeGreaterThan(0);
     });
+});
+
+describe("applyDiscount", () => {
+
+    test ("should apply 10% discount if customer has more than 10 points", () => {
+        db.getCustomerSync = function(customerId) {
+            console.log("fake reading customer");
+            return { id: customerId, points: 20 };
+        }
+        const order = { customerId: 1, totalPrice: 10};
+        lib.applyDiscount(order);
+
+        expect(order.totalPrice).toBe(9);
+      
+    });
+  
+});
+
+describe("notifyCustomer", () => {
+
+    test ("should send an email to a customer", () => {
+
+       // const mockFunction = jest.fn();
+       // mockFunction.mockReturnValue(1);
+       // mockFunction.mockResolvedValue(1);
+       // mockFunction.mockRejectedValue(new Error("..."));
+       // const result = mockFunction();
+
+        db.getCustomerSync = jest.fn().mockReturnValue({ email: "a"});
+
+        mail.send = jest.fn();
+
+        lib.notifyCustomer({ customerId: 1});
+
+        expect(mail.send).toHaveBeenCalled();
+        expect(mail.send.mock.calls[0][0]).toBe("a");
+        expect(mail.send.mock.calls[0][1]).toMatch(/order/);
+    });
+  
 });
